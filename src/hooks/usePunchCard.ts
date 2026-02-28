@@ -54,6 +54,7 @@ export function usePunchCard() {
   const [totalWorkedMs, setTotalWorkedMs] = useState(0);
   const [loading, setLoading] = useState(true);
   const [punching, setPunching] = useState(false);
+  const [error, setError] = useState("");
 
   useEffect(() => {
     if (!user) return;
@@ -72,8 +73,8 @@ export function usePunchCard() {
         setLoading(false);
         setPunching(false);
       },
-      (error) => {
-        console.error("PunchCard subscription error:", error);
+      (err) => {
+        setError(err.message);
         setLoading(false);
       }
     );
@@ -84,12 +85,13 @@ export function usePunchCard() {
   const punch = useCallback(async () => {
     if (!user || punching) return;
 
+    setError("");
     setPunching(true);
     try {
       const type = isClockedIn ? "OUT" : "IN";
       await writeTimeLog(DEFAULT_COMPANY_ID, user.uid, type, true);
-    } catch (error) {
-      console.error("Punch error:", error);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Error al fichar");
       setPunching(false);
     }
   }, [user, isClockedIn, punching]);
@@ -101,6 +103,7 @@ export function usePunchCard() {
     totalWorkedMs,
     loading,
     punching,
+    error,
     punch,
   };
 }
