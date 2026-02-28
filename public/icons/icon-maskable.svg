@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <rect width="512" height="512" fill="#2563eb"/>
+  <circle cx="256" cy="210" r="100" fill="none" stroke="#ffffff" stroke-width="20"/>
+  <line x1="256" y1="210" x2="256" y2="145" stroke="#ffffff" stroke-width="16" stroke-linecap="round"/>
+  <line x1="256" y1="210" x2="306" y2="235" stroke="#ffffff" stroke-width="14" stroke-linecap="round"/>
+  <circle cx="256" cy="210" r="10" fill="#ffffff"/>
+  <rect x="186" y="350" width="140" height="42" rx="21" fill="#ffffff"/>
+  <text x="256" y="378" text-anchor="middle" font-family="Arial, sans-serif" font-size="21" font-weight="bold" fill="#2563eb">FICHAR</text>
+</svg>
