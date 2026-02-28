@@ -31,6 +31,10 @@ export async function writeTimeLog(
   type: TimeLogType,
   captureLocation: boolean = false
 ): Promise<string> {
+  if (!companyId?.trim() || !uid?.trim()) {
+    throw new Error("companyId and uid are required and cannot be empty");
+  }
+
   const db = getFirebaseDatabase();
   const date = getTodayDate();
   const logsRef = ref(db, `logs/${companyId}/${uid}/${date}`);
@@ -53,19 +57,30 @@ export function subscribeToDayLogs(
   companyId: string,
   uid: string,
   date: string,
-  callback: (logs: (TimeLog & { id: string })[]) => void
+  callback: (logs: (TimeLog & { id: string })[]) => void,
+  onError?: (error: Error) => void
 ): Unsubscribe {
   const db = getFirebaseDatabase();
   const logsRef = ref(db, `logs/${companyId}/${uid}/${date}`);
   const logsQuery = query(logsRef, orderByChild("timestamp"));
 
-  return onValue(logsQuery, (snapshot) => {
-    const logs: (TimeLog & { id: string })[] = [];
+  return onValue(
+    logsQuery,
+    (snapshot) => {
+      const logs: (TimeLog & { id: string })[] = [];
 
-    snapshot.forEach((child) => {
-      logs.push({ id: child.key!, ...(child.val() as TimeLog) });
-    });
+      snapshot.forEach((child) => {
+        logs.push({ id: child.key!, ...(child.val() as TimeLog) });
+      });
 
-    callback(logs);
-  });
+      callback(logs);
+    },
+    (error) => {
+      if (onError) {
+        onError(error);
+      } else {
+        console.error("subscribeToDayLogs error:", error);
+      }
+    }
+  );
 }
