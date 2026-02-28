@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useAuth } from "@/components/AuthProvider";
 import { signOut } from "@/lib/firebase/auth";
 import { PunchCard } from "@/components/PunchCard";
+import { NotificationSettings } from "@/components/NotificationSettings";
 
 export default function Home() {
   const router = useRouter();
@@ -42,6 +43,9 @@ export default function Home() {
       </div>
       <p className="mt-1 text-sm text-muted">{user.email}</p>
       <PunchCard />
+      <div className="mt-6">
+        <NotificationSettings />
+      </div>
     </main>
   );
 }
