@@ -5,10 +5,16 @@ import { useRouter } from "next/navigation";
 import { useAuth } from "@/components/AuthProvider";
 import { signOut } from "@/lib/firebase/auth";
 import { PunchCard } from "@/components/PunchCard";
+import { NotificationSettings } from "@/components/NotificationSettings";
+import { useServiceWorker } from "@/hooks/useServiceWorker";
+import { usePushNotifications } from "@/hooks/usePushNotifications";
 
 export default function Home() {
   const router = useRouter();
   const { user, loading } = useAuth();
+  const swRegistration = useServiceWorker();
+  const { permission, config, updateConfig } =
+    usePushNotifications(swRegistration);
 
   useEffect(() => {
     if (!loading && !user) {
@@ -42,6 +48,13 @@ export default function Home() {
       </div>
       <p className="mt-1 text-sm text-muted">{user.email}</p>
       <PunchCard />
+      <div className="mt-6">
+        <NotificationSettings
+          config={config}
+          permission={permission}
+          onUpdate={updateConfig}
+        />
+      </div>
     </main>
   );
 }
