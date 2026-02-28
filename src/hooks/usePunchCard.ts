@@ -2,7 +2,11 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { useAuth } from "@/components/AuthProvider";
-import { writeTimeLog, subscribeToDayLogs } from "@/lib/firebase/database";
+import {
+  writeTimeLog,
+  subscribeToDayLogs,
+  registerEmployee,
+} from "@/lib/firebase/database";
 import type { TimeLog } from "@/types";
 
 const DEFAULT_COMPANY_ID = "default";
@@ -58,6 +62,12 @@ export function usePunchCard() {
 
   useEffect(() => {
     if (!user) return;
+
+    if (user.email) {
+      registerEmployee(DEFAULT_COMPANY_ID, user.uid, user.email).catch(
+        () => {}
+      );
+    }
 
     const today = getTodayDate();
     const unsubscribe = subscribeToDayLogs(

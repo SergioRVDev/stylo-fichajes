@@ -54,3 +54,18 @@ body {
 .animate-pulse-ring {
   animation: pulse-ring 1.5s cubic-bezier(0.215, 0.61, 0.355, 1) infinite;
 }
+
+@media print {
+  body {
+    background: white !important;
+    color: black !important;
+  }
+
+  .max-w-lg {
+    max-width: 100% !important;
+  }
+
+  .shadow-xl {
+    box-shadow: none !important;
+  }
+}
