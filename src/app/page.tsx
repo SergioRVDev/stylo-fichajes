@@ -4,6 +4,7 @@ import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/components/AuthProvider";
 import { signOut } from "@/lib/firebase/auth";
+import { PunchCard } from "@/components/PunchCard";
 
 export default function Home() {
   const router = useRouter();
@@ -40,7 +41,7 @@ export default function Home() {
         </button>
       </div>
       <p className="mt-1 text-sm text-muted">{user.email}</p>
-      <p className="mt-8 text-center text-muted">Control horario</p>
+      <PunchCard />
     </main>
   );
 }
