@@ -54,3 +54,38 @@ body {
 .animate-pulse-ring {
   animation: pulse-ring 1.5s cubic-bezier(0.215, 0.61, 0.355, 1) infinite;
 }
+
+.inspection-report {
+  width: 100vw;
+  position: relative;
+  left: 50%;
+  margin-left: -50vw;
+}
+
+@media print {
+  body {
+    background: white !important;
+    color: black !important;
+  }
+
+  .inspection-report {
+    width: 100% !important;
+    left: 0 !important;
+    margin-left: 0 !important;
+    font-size: 11pt;
+  }
+
+  .inspection-report table {
+    page-break-inside: auto;
+  }
+
+  .inspection-report tr {
+    page-break-inside: avoid;
+  }
+
+  .inspection-report th {
+    background: #e5e7eb !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+}
