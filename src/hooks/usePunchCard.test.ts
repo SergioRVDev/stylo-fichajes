@@ -18,30 +18,39 @@ function makeLog(
 
 describe("computeStatus", () => {
   it("should return not clocked in with no logs", () => {
-    const result = computeStatus([]);
+    const result = computeStatus([], "1970-01-01");
 
     expect(result.isClockedIn).toBe(false);
-    expect(result.lastInTimestamp).toBeNull();
+    expect(result.isPaused).toBe(false);
+    expect(result.activeWorkStart).toBeNull();
+    expect(result.activeBreakStart).toBeNull();
     expect(result.totalWorkedMs).toBe(0);
+    expect(result.totalBreakMs).toBe(0);
   });
 
   it("should return clocked in after a single IN log", () => {
-    const result = computeStatus([makeLog("IN", 1000)]);
+    const result = computeStatus([makeLog("IN", 1000)], "1970-01-01");
 
     expect(result.isClockedIn).toBe(true);
-    expect(result.lastInTimestamp).toBe(1000);
+    expect(result.isPaused).toBe(false);
+    expect(result.activeWorkStart).toBe(1000);
+    expect(result.activeBreakStart).toBeNull();
     expect(result.totalWorkedMs).toBe(0);
+    expect(result.totalBreakMs).toBe(0);
   });
 
   it("should return not clocked in after IN then OUT", () => {
     const result = computeStatus([
       makeLog("IN", 1000),
       makeLog("OUT", 5000),
-    ]);
+    ], "1970-01-01");
 
     expect(result.isClockedIn).toBe(false);
-    expect(result.lastInTimestamp).toBeNull();
+    expect(result.isPaused).toBe(false);
+    expect(result.activeWorkStart).toBeNull();
+    expect(result.activeBreakStart).toBeNull();
     expect(result.totalWorkedMs).toBe(4000);
+    expect(result.totalBreakMs).toBe(0);
   });
 
   it("should calculate total worked time for multiple intervals", () => {
@@ -50,10 +59,12 @@ describe("computeStatus", () => {
       makeLog("OUT", 3000),
       makeLog("IN", 5000),
       makeLog("OUT", 8000),
-    ]);
+    ], "1970-01-01");
 
     expect(result.isClockedIn).toBe(false);
+    expect(result.isPaused).toBe(false);
     expect(result.totalWorkedMs).toBe(5000);
+    expect(result.totalBreakMs).toBe(0);
   });
 
   it("should handle clocked in during second interval", () => {
@@ -61,30 +72,50 @@ describe("computeStatus", () => {
       makeLog("IN", 1000),
       makeLog("OUT", 3000),
       makeLog("IN", 5000),
-    ]);
+    ], "1970-01-01");
 
     expect(result.isClockedIn).toBe(true);
-    expect(result.lastInTimestamp).toBe(5000);
+    expect(result.isPaused).toBe(false);
+    expect(result.activeWorkStart).toBe(5000);
+    expect(result.activeBreakStart).toBeNull();
     expect(result.totalWorkedMs).toBe(2000);
+    expect(result.totalBreakMs).toBe(0);
   });
 
   it("should ignore OUT without a preceding IN", () => {
-    const result = computeStatus([makeLog("OUT", 1000)]);
+    const result = computeStatus([makeLog("OUT", 1000)], "1970-01-01");
 
     expect(result.isClockedIn).toBe(false);
     expect(result.totalWorkedMs).toBe(0);
+    expect(result.totalBreakMs).toBe(0);
   });
 
-  it("should ignore BREAK_START and BREAK_END types", () => {
+  it("should correctly handle BREAK_START and BREAK_END types", () => {
     const result = computeStatus([
       makeLog("IN", 1000),
       makeLog("BREAK_START", 2000),
-      makeLog("BREAK_END", 3000),
+      makeLog("BREAK_END", 4000),
       makeLog("OUT", 5000),
-    ]);
+    ], "1970-01-01");
 
     expect(result.isClockedIn).toBe(false);
-    expect(result.totalWorkedMs).toBe(4000);
+    expect(result.isPaused).toBe(false);
+    expect(result.totalWorkedMs).toBe(2000); // 1K->2K (1000) + 4K->5K (1000)
+    expect(result.totalBreakMs).toBe(2000); // 2K->4K (2000)
+  });
+  
+  it("should return paused if currently on break", () => {
+    const result = computeStatus([
+      makeLog("IN", 1000),
+      makeLog("BREAK_START", 2000),
+    ], "1970-01-01");
+
+    expect(result.isClockedIn).toBe(true);
+    expect(result.isPaused).toBe(true);
+    expect(result.activeWorkStart).toBeNull();
+    expect(result.activeBreakStart).toBe(2000);
+    expect(result.totalWorkedMs).toBe(1000);
+    expect(result.totalBreakMs).toBe(0);
   });
 });
 

@@ -1,6 +1,8 @@
 import { initializeApp, getApps, type FirebaseApp } from "firebase/app";
 import { getAuth, type Auth } from "firebase/auth";
 import { getDatabase, type Database } from "firebase/database";
+import { getStorage, type FirebaseStorage } from "firebase/storage";
+import { getMessaging, type Messaging } from "firebase/messaging";
 
 const firebaseConfig = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
@@ -15,6 +17,8 @@ const firebaseConfig = {
 let app: FirebaseApp | undefined;
 let authInstance: Auth | undefined;
 let dbInstance: Database | undefined;
+let storageInstance: FirebaseStorage | undefined;
+let messagingInstance: Messaging | undefined;
 
 function getApp() {
   if (!app) {
@@ -35,4 +39,19 @@ export function getFirebaseDatabase() {
     dbInstance = getDatabase(getApp());
   }
   return dbInstance;
+}
+
+export function getFirebaseStorage() {
+  if (!storageInstance) {
+    storageInstance = getStorage(getApp());
+  }
+  return storageInstance;
+}
+
+export function getFirebaseMessaging(): Messaging | null {
+  if (typeof window === "undefined") return null;
+  if (!messagingInstance) {
+    messagingInstance = getMessaging(getApp());
+  }
+  return messagingInstance;
 }

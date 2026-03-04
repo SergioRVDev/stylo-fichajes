@@ -3,7 +3,7 @@ import {
   getCompanyIdByHash,
   getCompanyInfo,
   getAllCompanyLogs,
-  getEmployeeEmails,
+  getAllEmployeesRecord,
 } from "@/lib/firebase/database";
 import type {
   InspectionReport,
@@ -71,23 +71,27 @@ export async function GET(
     const fromDate = getDateMonthsAgo(3);
     const toDate = getTodayDate();
 
-    const [logs, emailMap] = await Promise.all([
+    const [logs, employeesData] = await Promise.all([
       getAllCompanyLogs(companyId, fromDate, toDate),
-      getEmployeeEmails(companyId),
+      getAllEmployeesRecord(companyId),
     ]);
 
     const employees: InspectionEmployee[] = Object.entries(logs).map(
       ([uid, dateLogs]) => {
-        const records: InspectionDayRecord[] = Object.entries(dateLogs)
-          .sort(([a], [b]) => a.localeCompare(b))
-          .map(([date, dayLogs]) => ({
+        const dayEntries = Object.entries(dateLogs as Record<string, TimeLog[]>).sort(
+          ([a], [b]) => a.localeCompare(b)
+        );
+
+        const records: InspectionDayRecord[] = dayEntries.map(
+          ([date, dayLogs]) => ({
             date,
             entries: dayLogs.map((log) => ({
               type: log.type,
               timestamp: log.timestamp,
             })),
             totalMinutes: calculateDayMinutes(dayLogs),
-          }));
+          })
+        );
 
         const totalMinutes = records.reduce(
           (sum, r) => sum + r.totalMinutes,
@@ -96,7 +100,7 @@ export async function GET(
 
         return {
           uid,
-          email: emailMap[uid],
+          email: employeesData[uid]?.email ?? "unknown@email.com",
           records,
           totalMinutes,
         };

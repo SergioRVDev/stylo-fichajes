@@ -1,31 +1,25 @@
-"use client";
-
 import { useState, useEffect } from "react";
 import { usePunchCard, formatDuration } from "@/hooks/usePunchCard";
-
-function formatTimestamp(timestamp: number): string {
-  return new Date(timestamp).toLocaleTimeString("es-ES", {
-    hour: "2-digit",
-    minute: "2-digit",
-  });
-}
+import { Square, Play, Pause } from "lucide-react";
 
 export function PunchCard() {
   const {
     isClockedIn,
-    lastInTimestamp,
+    isPaused,
+    activeWorkStart,
+    activeBreakStart,
     totalWorkedMs,
+    totalBreakMs,
     loading,
     punching,
     error,
     punch,
-    logs,
+    toggleBreak,
   } = usePunchCard();
   const [now, setNow] = useState(0);
 
   useEffect(() => {
     if (!isClockedIn) return;
-
     const tick = () => setNow(Date.now());
     const interval = setInterval(tick, 1000);
     tick();
@@ -34,90 +28,76 @@ export function PunchCard() {
 
   if (loading) {
     return (
-      <div className="flex flex-1 items-center justify-center">
-        <p className="text-muted">Cargando fichajes...</p>
+      <div className="flex w-full items-center justify-center p-6 bg-primary rounded-2xl animate-pulse">
+        <p className="text-white/50 text-sm">Cargando...</p>
       </div>
     );
   }
 
-  const currentSessionMs =
-    isClockedIn && lastInTimestamp ? now - lastInTimestamp : 0;
-  const displayMs = totalWorkedMs + currentSessionMs;
+  const currentWorkMs = isClockedIn && !isPaused && activeWorkStart ? now - activeWorkStart : 0;
+  const currentBreakMs = isClockedIn && isPaused && activeBreakStart ? now - activeBreakStart : 0;
+
+  const displayWorkMs = totalWorkedMs + currentWorkMs;
+  const displayBreakMs = totalBreakMs + currentBreakMs;
 
   return (
-    <div className="flex flex-1 flex-col items-center pt-6">
-      {/* Status Indicator */}
-      <div className="flex items-center gap-2">
-        <span
-          className={`h-3 w-3 rounded-full transition-colors duration-500 ${
-            isClockedIn ? "bg-success" : "bg-muted"
-          }`}
-        />
-        <span
-          className={`text-sm font-medium transition-colors duration-500 ${
-            isClockedIn ? "text-success" : "text-muted"
+    <div className="w-full">
+      <div className="w-full bg-white border border-primary rounded-2xl p-4 flex items-center justify-between shadow-lg">
+        {/* Toggle Button */}
+        <button
+          onClick={punch}
+          disabled={punching || (isClockedIn && isPaused)}
+          className={`h-[48px] w-[48px] rounded-xl flex items-center justify-center transition-all disabled:opacity-50 ${
+            isClockedIn
+              ? "bg-[#ec6a6b] text-white shadow-[0_0_15px_rgba(236,106,107,0.4)]"
+              : "bg-[#22c55e] text-white shadow-[0_0_15px_rgba(34,197,94,0.4)]"
           }`}
         >
-          {isClockedIn ? "Fichado" : "Fuera de servicio"}
-        </span>
-      </div>
-
-      {/* Timer */}
-      <p className="mt-4 font-mono text-5xl font-bold tracking-tight">
-        {formatDuration(displayMs)}
-      </p>
-      <p className="mt-1 text-sm text-muted">Jornada actual</p>
-
-      {/* Punch Button */}
-      <div className="mt-10 flex flex-col items-center">
-        <div className="relative flex items-center justify-center">
-          {isClockedIn && (
-            <span className="absolute h-36 w-36 animate-pulse-ring rounded-full bg-danger/30" />
+          {punching ? (
+            <div className="h-5 w-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+          ) : isClockedIn ? (
+            <Square className="h-5 w-5 fill-current" />
+          ) : (
+            <Play className="h-5 w-5 fill-current ml-1" />
           )}
-          <button
-            onClick={punch}
-            disabled={punching}
-            className={`relative z-10 h-36 w-36 rounded-full text-xl font-bold text-white shadow-lg transition-all duration-500 active:scale-95 disabled:opacity-70 ${
-              isClockedIn
-                ? "bg-danger shadow-danger/25 hover:bg-danger/90"
-                : "bg-success shadow-success/25 hover:bg-success/90"
+        </button>
+
+        {/* Timer Text */}
+        <div className="flex-1 flex flex-col items-center justify-center">
+          <p
+            className={`font-medium text-xl tracking-wide ${
+              isPaused ? "text-amber-400" : isClockedIn ? "text-gray-600" : "text-gray-600"
             }`}
           >
-            {punching ? "..." : isClockedIn ? "Salida" : "Entrada"}
-          </button>
+            {formatDuration(isPaused ? displayBreakMs : displayWorkMs)}
+          </p>
+          <p className="text-gray-600 text-sm mt-0.5">
+            {isPaused ? "En pausa" : isClockedIn ? "Trabajando" : "Fuera de servicio"}
+          </p>
         </div>
-        <p className="mt-4 text-sm text-muted">
-          {isClockedIn
-            ? "Pulsa para fichar salida"
-            : "Pulsa para fichar entrada"}
-        </p>
+
+        {/* Pause Button (Only if clocked in) */}
+        {isClockedIn ? (
+          <button
+            onClick={toggleBreak}
+            disabled={punching}
+            className={`h-[48px] w-[48px] rounded-xl flex items-center justify-center transition-all disabled:opacity-50 ${
+              isPaused
+                ? "bg-primary text-pink-300 border border-white/10"
+                : "bg-gray-500/10 text-gray-500 hover:bg-gray-500/20"
+            }`}
+          >
+            {isPaused ? <Play className="h-5 w-5 fill-current ml-0.5" /> : <Pause className="h-5 w-5 fill-current" />}
+          </button>
+        ) : (
+          <div className="h-[48px] w-[48px]" /> /* Spacer when not clocked in */
+        )}
       </div>
 
-      {/* Error */}
       {error && (
-        <p className="mt-4 text-center text-sm text-danger">{error}</p>
-      )}
-
-      {/* Today's Log */}
-      {logs.length > 0 && (
-        <div className="mt-auto w-full pt-8">
-          <h2 className="text-sm font-semibold text-muted">Registro de hoy</h2>
-          <ul className="mt-2 space-y-1.5">
-            {logs.map((log) => (
-              <li key={log.id} className="flex items-center gap-2 text-sm">
-                <span
-                  className={`h-2 w-2 rounded-full ${
-                    log.type === "IN" ? "bg-success" : "bg-danger"
-                  }`}
-                />
-                <span className="text-muted">
-                  {formatTimestamp(log.timestamp)}
-                </span>
-                <span>{log.type === "IN" ? "Entrada" : "Salida"}</span>
-              </li>
-            ))}
-          </ul>
-        </div>
+        <p className="mt-3 text-center text-xs font-medium text-danger bg-danger/10 px-3 py-1.5 rounded-lg">
+          {error}
+        </p>
       )}
     </div>
   );
